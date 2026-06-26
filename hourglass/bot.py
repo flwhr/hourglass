@@ -7,9 +7,14 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import io
+
 from hourglass.commands import clubs_cmd, ops_cmd, links_cmd, tier_cmd
 from hourglass.commands import admin_cmd, club_admin_cmd, members_cmd, status_cmd
+from hourglass.commands import board_cmd
 from hourglass.db import clubs
+from hourglass.db import history as history_repo
+from hourglass.reports.images import render_progress_chart, render_trainer_card
 from hourglass.services.scheduler import run_due_clubs
 from hourglass.services.rollover import period_key, should_post_rollover
 from hourglass.utils.permissions import user_is_manager
@@ -292,5 +297,81 @@ def build_bot(db, client, settings) -> commands.Bot:
         now = _dt.datetime.now(_dt.timezone.utc)
         msg = await status_cmd.cmd_previous_month(db, client, club_name=club, now_utc=now)
         await interaction.followup.send(msg[:1900])
+
+    @bot.tree.command(name="post_monthly_info", description="Post a club's monthly info board")
+    @app_commands.guild_only()
+    async def post_monthly_info(interaction: discord.Interaction, club: str, channel: discord.TextChannel):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.defer()
+        now = _dt.datetime.now(_dt.timezone.utc)
+        content = await board_cmd.cmd_monthly_info_content(db, client, club_name=club, now_utc=now)
+        sent = await channel.send(content[:1900])
+        row = await clubs.get_club_by_name(db, club)
+        if row is not None:
+            await clubs.set_monthly_info(db, row["id"], channel_id=channel.id, message_id=sent.id)
+        await interaction.followup.send("Posted.", ephemeral=True)
+
+    @bot.tree.command(name="update_monthly_info", description="Refresh a club's monthly info board")
+    @app_commands.guild_only()
+    async def update_monthly_info(interaction: discord.Interaction, club: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.defer(ephemeral=True)
+        row = await clubs.get_club_by_name(db, club)
+        if row is None:
+            await interaction.followup.send(f"No club named '{club}'.", ephemeral=True)
+            return
+        ch_id, msg_id = row["monthly_info_channel_id"], row["monthly_info_message_id"]
+        if ch_id is None or msg_id is None:
+            await interaction.followup.send("Post it first with /post_monthly_info.", ephemeral=True)
+            return
+        now = _dt.datetime.now(_dt.timezone.utc)
+        content = await board_cmd.cmd_monthly_info_content(db, client, club_name=club, now_utc=now)
+        channel = bot.get_channel(ch_id)
+        try:
+            msg = await channel.fetch_message(msg_id)
+            await msg.edit(content=content[:1900])
+            await interaction.followup.send("Updated.", ephemeral=True)
+        except Exception:
+            await interaction.followup.send("Could not edit the stored message.", ephemeral=True)
+
+    @bot.tree.command(name="progress_chart", description="Fan progression chart for a club")
+    @app_commands.guild_only()
+    async def progress_chart(interaction: discord.Interaction, club: str):
+        await interaction.response.defer()
+        row = await clubs.get_club_by_name(db, club)
+        if row is None:
+            await interaction.followup.send(f"No club named '{club}'.")
+            return
+        series = await history_repo.get_club_history(db, row["id"])
+        png = render_progress_chart(series)
+        await interaction.followup.send(file=discord.File(io.BytesIO(png), filename="progress.png"))
+
+    @bot.tree.command(name="member_status", description="Show a member's trainer card")
+    @app_commands.guild_only()
+    async def member_status(interaction: discord.Interaction, club: str, trainer_name: str):
+        await interaction.response.defer()
+        row = await clubs.get_club_by_name(db, club)
+        if row is None:
+            await interaction.followup.send(f"No club named '{club}'.")
+            return
+        member = await db.fetchone(
+            "SELECT * FROM member WHERE club_id=? AND trainer_name=?", (row["id"], trainer_name))
+        if member is None:
+            await interaction.followup.send(f"No member named '{trainer_name}' in '{club}'.")
+            return
+        from hourglass.db import bombs as _bombs
+        hist = await db.fetchone(
+            "SELECT cumulative_fans, days_behind FROM quota_history WHERE member_id=? "
+            "ORDER BY date DESC, id DESC LIMIT 1", (member["id"],))
+        gain = hist["cumulative_fans"] if hist else 0
+        days_behind = hist["days_behind"] if hist else 0
+        bomb = await _bombs.get_active_for_member(db, member["id"])
+        bomb_days = bomb["days_remaining"] if bomb else None
+        png = render_trainer_card(trainer_name, club, gain, days_behind, bomb_days)
+        await interaction.followup.send(file=discord.File(io.BytesIO(png), filename="card.png"))
 
     return bot

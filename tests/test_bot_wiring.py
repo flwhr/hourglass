@@ -18,4 +18,5 @@ async def test_build_bot_registers_expected_commands():
         "add_member", "deactivate_member", "activate_member",
         "remove_club", "activate_club", "reset_month", "stats",
         "channel_settings", "previous_month",
+        "post_monthly_info", "update_monthly_info", "progress_chart", "member_status",
     } <= names
