@@ -12,4 +12,6 @@ async def test_build_bot_registers_expected_commands():
     assert {
         "add_club", "edit_club", "list_clubs",
         "set_report_channel", "quota", "force_check",
+        "set_alert_channel", "link_trainer", "unlink",
+        "notification_settings", "my_status", "bomb_status",
     } <= names

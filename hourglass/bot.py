@@ -7,7 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from hourglass.commands import clubs_cmd, ops_cmd
+from hourglass.commands import clubs_cmd, ops_cmd, links_cmd
 from hourglass.services.scheduler import run_due_clubs
 from hourglass.utils.permissions import user_is_manager
 
@@ -29,10 +29,22 @@ def build_bot(db, client, settings) -> commands.Bot:
         if channel is not None:
             await channel.send(text)
 
+    async def _dm(discord_user_id: int, text: str) -> None:
+        user = bot.get_user(discord_user_id)
+        if user is None:
+            try:
+                user = await bot.fetch_user(discord_user_id)
+            except Exception:
+                return
+        try:
+            await user.send(text)
+        except Exception:
+            pass
+
     @tasks.loop(minutes=1)
     async def scheduler_loop():
         now = _dt.datetime.now(_dt.timezone.utc)
-        await run_due_clubs(db, client, now, _send, last_runs)
+        await run_due_clubs(db, client, now, _send, last_runs, _dm)
 
     @bot.event
     async def on_ready():
@@ -111,5 +123,52 @@ def build_bot(db, client, settings) -> commands.Bot:
         now = _dt.datetime.now(_dt.timezone.utc)
         msg = await ops_cmd.cmd_force_check(db, client, club_name=club, now_utc=now, send=_send)
         await interaction.followup.send(msg[:1900])
+
+    @bot.tree.command(name="set_alert_channel", description="Set a club's bomb/alert channel")
+    @app_commands.guild_only()
+    async def set_alert_channel(interaction: discord.Interaction, club: str, channel: discord.TextChannel):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        from hourglass.db import clubs as _clubs
+        row = await _clubs.get_club_by_name(db, club)
+        if row is None:
+            await interaction.response.send_message(f"No club named '{club}'.")
+            return
+        await _clubs.update_club(db, row["id"], alert_channel_id=channel.id)
+        await interaction.response.send_message(f"Alert channel set for '{club}'.")
+
+    @bot.tree.command(name="link_trainer", description="Link your Discord to a trainer")
+    @app_commands.guild_only()
+    async def link_trainer(interaction: discord.Interaction, club: str, trainer_name: str):
+        msg = await links_cmd.cmd_link_trainer(
+            db, discord_user_id=interaction.user.id, club_name=club, trainer_name=trainer_name)
+        await interaction.response.send_message(msg, ephemeral=True)
+
+    @bot.tree.command(name="unlink", description="Remove your trainer link")
+    @app_commands.guild_only()
+    async def unlink(interaction: discord.Interaction):
+        msg = await links_cmd.cmd_unlink(db, discord_user_id=interaction.user.id)
+        await interaction.response.send_message(msg, ephemeral=True)
+
+    @bot.tree.command(name="notification_settings", description="Toggle your DM alerts")
+    @app_commands.guild_only()
+    async def notification_settings(
+        interaction: discord.Interaction, bomb_warnings: bool | None = None, deficit_alerts: bool | None = None
+    ):
+        msg = await links_cmd.cmd_notification_settings(
+            db, discord_user_id=interaction.user.id, on_bombs=bomb_warnings, on_deficit=deficit_alerts)
+        await interaction.response.send_message(msg, ephemeral=True)
+
+    @bot.tree.command(name="my_status", description="Show your linked trainer's bomb status")
+    @app_commands.guild_only()
+    async def my_status(interaction: discord.Interaction):
+        await interaction.response.send_message(
+            "Use /bomb_status <club> for now.", ephemeral=True)
+
+    @bot.tree.command(name="bomb_status", description="List active bombs in a club")
+    @app_commands.guild_only()
+    async def bomb_status(interaction: discord.Interaction, club: str):
+        await interaction.response.send_message(await links_cmd.cmd_bomb_status(db, club_name=club))
 
     return bot

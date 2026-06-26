@@ -21,14 +21,14 @@ def should_run_now(now_utc: datetime, poll_time: str, last_run_date) -> bool:
     return True
 
 
-async def run_due_clubs(db, client, now_utc: datetime, send, last_runs: dict) -> dict:
+async def run_due_clubs(db, client, now_utc: datetime, send, last_runs: dict, dm=None) -> dict:
     summary = {"ran": 0, "stale": 0, "failed": 0}
     for club_row in await clubs.list_clubs(db, active_only=True):
         club_id = club_row["id"]
         if not should_run_now(now_utc, club_row["scrape_time"], last_runs.get(club_id)):
             continue
         try:
-            await run_one_club(db, client, club_row, now_utc, send)
+            await run_one_club(db, client, club_row, now_utc, send, dm)
             last_runs[club_id] = now_utc.date()
             summary["ran"] += 1
         except StaleDataError:
