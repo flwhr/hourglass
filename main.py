@@ -5,6 +5,7 @@ import logging
 import os
 
 import aiohttp
+from dotenv import load_dotenv
 
 from bot import build_bot
 from config.settings import load_settings
@@ -15,6 +16,7 @@ from utils.rate_limiter import RateLimiter
 
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
+    load_dotenv()  # load .env (real env vars still take precedence)
     settings = load_settings(os.environ)
 
     db = Database()
