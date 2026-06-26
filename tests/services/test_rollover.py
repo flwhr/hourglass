@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from hourglass.services.rollover import period_key, should_post_rollover
+from services.rollover import period_key, should_post_rollover
 
 
 def test_period_key():

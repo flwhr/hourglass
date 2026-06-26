@@ -1,5 +1,5 @@
-from hourglass.reports.monthly_info import format_monthly_info
-from hourglass.services.tracker import MemberState
+from reports.monthly_info import format_monthly_info
+from services.tracker import MemberState
 
 
 def _s(name, gain, deficit):

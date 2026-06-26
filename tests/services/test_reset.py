@@ -1,4 +1,4 @@
-from hourglass.services.reset import any_member_reset, is_monthly_reset
+from services.reset import any_member_reset, is_monthly_reset
 
 
 def test_reset_when_fans_drop_below_half():

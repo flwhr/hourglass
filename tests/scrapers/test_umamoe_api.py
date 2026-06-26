@@ -1,6 +1,6 @@
 import pytest
 
-from hourglass.scrapers.umamoe_api import BASE_URL, UmamoeClient
+from scrapers.umamoe_api import BASE_URL, UmamoeClient
 
 
 class FakeResponse:

@@ -1,6 +1,6 @@
 import pytest
 
-from hourglass.scrapers.parser import MemberGain, parse_circle
+from scrapers.parser import MemberGain, parse_circle
 
 
 def _payload(members):

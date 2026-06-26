@@ -1,4 +1,4 @@
-from hourglass.reports.images import PNG_SIGNATURE, render_trainer_card
+from reports.images import PNG_SIGNATURE, render_trainer_card
 
 
 def test_render_trainer_card_png():

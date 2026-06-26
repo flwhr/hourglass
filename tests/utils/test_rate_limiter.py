@@ -1,6 +1,6 @@
 import pytest
 
-from hourglass.utils.rate_limiter import RateLimiter
+from utils.rate_limiter import RateLimiter
 
 
 class FakeClock:

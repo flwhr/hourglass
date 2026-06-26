@@ -1,4 +1,4 @@
-from hourglass.services.quota_calculator import (
+from services.quota_calculator import (
     PERIOD_DAYS,
     QuotaResult,
     compute_quota,

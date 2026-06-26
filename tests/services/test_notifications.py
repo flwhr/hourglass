@@ -1,9 +1,9 @@
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, members, links
-from hourglass.services.bomb_manager import BombEvent
-from hourglass.services.notifications import format_alert, send_bomb_notifications
+from db.database import Database
+from db import clubs, members, links
+from services.bomb_manager import BombEvent
+from services.notifications import format_alert, send_bomb_notifications
 
 
 def _changes(activated=None, recovered=None, expired=None):

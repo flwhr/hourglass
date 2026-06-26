@@ -1,8 +1,8 @@
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs
-from hourglass.commands import clubs_cmd
+from db.database import Database
+from db import clubs
+from commands import clubs_cmd
 
 
 async def _db(tmp_path):

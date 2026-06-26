@@ -2,9 +2,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, quota
-from hourglass.commands import ops_cmd
+from db.database import Database
+from db import clubs, quota
+from commands import ops_cmd
 
 
 class FakeClient:

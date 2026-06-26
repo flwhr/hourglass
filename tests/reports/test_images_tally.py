@@ -1,4 +1,4 @@
-from hourglass.reports.images import PNG_SIGNATURE, render_tally
+from reports.images import PNG_SIGNATURE, render_tally
 
 
 def test_render_tally_returns_png_bytes():

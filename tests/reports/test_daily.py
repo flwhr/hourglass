@@ -1,5 +1,5 @@
-from hourglass.reports.daily import format_daily_report
-from hourglass.services.tracker import MemberState
+from reports.daily import format_daily_report
+from services.tracker import MemberState
 
 
 def _state(name, gain, days_behind=0):

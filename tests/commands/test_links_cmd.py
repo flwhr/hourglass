@@ -1,8 +1,8 @@
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, members, bombs
-from hourglass.commands import links_cmd
+from db.database import Database
+from db import clubs, members, bombs
+from commands import links_cmd
 
 
 async def _setup(tmp_path):

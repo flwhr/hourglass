@@ -1,7 +1,7 @@
 import pytest
 
-from hourglass.bot import build_bot
-from hourglass.config.settings import load_settings
+from bot import build_bot
+from config.settings import load_settings
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-from hourglass.services.bombs import decremented, is_expired, should_activate, should_recover
+from services.bombs import decremented, is_expired, should_activate, should_recover
 
 
 def test_should_activate_at_threshold_without_active():

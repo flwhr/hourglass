@@ -1,5 +1,5 @@
-from hourglass.services.leaderboard import LeaderboardEntry
-from hourglass.services.standings import format_tier_standings
+from services.leaderboard import LeaderboardEntry
+from services.standings import format_tier_standings
 
 
 def test_groups_by_club_with_summary():

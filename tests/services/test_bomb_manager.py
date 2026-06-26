@@ -1,9 +1,9 @@
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, members, bombs
-from hourglass.services.bomb_manager import process_bombs
-from hourglass.services.tracker import MemberState
+from db.database import Database
+from db import clubs, members, bombs
+from services.bomb_manager import process_bombs
+from services.tracker import MemberState
 
 
 async def _setup(tmp_path, **club_kwargs):

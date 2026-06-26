@@ -1,4 +1,4 @@
-from hourglass.utils.permissions import user_is_manager
+from utils.permissions import user_is_manager
 
 
 def test_admin_is_manager():

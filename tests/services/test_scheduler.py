@@ -2,9 +2,9 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs
-from hourglass.services.scheduler import run_due_clubs, should_run_now
+from db.database import Database
+from db import clubs
+from services.scheduler import run_due_clubs, should_run_now
 
 
 def test_should_run_after_poll_time_and_not_yet_today():

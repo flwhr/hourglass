@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, members, quota
-from hourglass.scrapers.umamoe_api import StaleDataError
-from hourglass.services.tracker import MemberState, daily_check_for_club
+from db.database import Database
+from db import clubs, members, quota
+from scrapers.umamoe_api import StaleDataError
+from services.tracker import MemberState, daily_check_for_club
 
 
 class FakeClient:

@@ -1,6 +1,6 @@
 import pytest
 
-from hourglass.db.database import Database
+from db.database import Database
 
 
 async def _fresh_db(tmp_path):

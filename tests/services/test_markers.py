@@ -1,4 +1,4 @@
-from hourglass.services.markers import marker_emoji, marker_for
+from services.markers import marker_emoji, marker_for
 
 
 def test_promote_when_gain_at_or_above_promote_threshold():

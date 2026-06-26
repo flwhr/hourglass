@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from hourglass.services.period import PeriodPlan, is_stale, resolve_period
+from services.period import PeriodPlan, is_stale, resolve_period
 
 
 def test_normal_day_uses_current_month_and_day():

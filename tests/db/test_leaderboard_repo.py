@@ -1,7 +1,7 @@
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, members, quota, leaderboard
+from db.database import Database
+from db import clubs, members, quota, leaderboard
 
 
 async def _db(tmp_path):

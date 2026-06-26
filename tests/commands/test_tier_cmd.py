@@ -1,8 +1,8 @@
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs, members, quota
-from hourglass.commands import tier_cmd
+from db.database import Database
+from db import clubs, members, quota
+from commands import tier_cmd
 
 
 async def _db(tmp_path):

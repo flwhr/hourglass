@@ -1,4 +1,4 @@
-from hourglass.reports.images import PNG_SIGNATURE, render_progress_chart
+from reports.images import PNG_SIGNATURE, render_progress_chart
 
 
 def test_render_chart_png():

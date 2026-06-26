@@ -1,4 +1,4 @@
-from hourglass.services.leaderboard import (
+from services.leaderboard import (
     LeaderboardEntry,
     build_leaderboard,
     format_leaderboard,

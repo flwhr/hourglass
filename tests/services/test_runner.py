@@ -2,9 +2,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from hourglass.db.database import Database
-from hourglass.db import clubs
-from hourglass.services.runner import run_daily_checks, run_one_club
+from db.database import Database
+from db import clubs
+from services.runner import run_daily_checks, run_one_club
 
 
 class FakeClient:

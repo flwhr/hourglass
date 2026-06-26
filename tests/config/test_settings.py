@@ -1,6 +1,6 @@
 import pytest
 
-from hourglass.config.settings import Settings, load_settings
+from config.settings import Settings, load_settings
 
 
 def test_load_settings_full():
