@@ -72,3 +72,7 @@ async def reset_manual_flags(db: Database, club_id: int) -> None:
     await db.execute(
         "UPDATE member SET manually_deactivated=0 WHERE club_id=?", (club_id,)
     )
+
+
+async def get_member_by_id(db: Database, member_id: int):
+    return await db.fetchone("SELECT * FROM member WHERE id=?", (member_id,))
