@@ -42,10 +42,12 @@ def build_bot(db, client, settings) -> commands.Bot:
         logger.info("Hourglass logged in as %s", bot.user)
 
     @bot.tree.command(name="list_clubs", description="List tracked clubs")
+    @app_commands.guild_only()
     async def list_clubs(interaction: discord.Interaction):
         await interaction.response.send_message(await clubs_cmd.cmd_list_clubs(db))
 
     @bot.tree.command(name="add_club", description="Register a club for tracking")
+    @app_commands.guild_only()
     async def add_club(
         interaction: discord.Interaction, name: str, circle_id: str, tier: int = 1,
         promote_threshold: int = 0, relegate_threshold: int = 0,
@@ -62,6 +64,7 @@ def build_bot(db, client, settings) -> commands.Bot:
         await interaction.response.send_message(msg)
 
     @bot.tree.command(name="edit_club", description="Edit a club's settings")
+    @app_commands.guild_only()
     async def edit_club(
         interaction: discord.Interaction, name: str, tier: int | None = None,
         promote_threshold: int | None = None, relegate_threshold: int | None = None,
@@ -78,6 +81,7 @@ def build_bot(db, client, settings) -> commands.Bot:
         await interaction.response.send_message(msg)
 
     @bot.tree.command(name="set_report_channel", description="Set a club's daily report channel")
+    @app_commands.guild_only()
     async def set_report_channel(
         interaction: discord.Interaction, club: str, channel: discord.TextChannel
     ):
@@ -88,6 +92,7 @@ def build_bot(db, client, settings) -> commands.Bot:
         await interaction.response.send_message(msg)
 
     @bot.tree.command(name="quota", description="Set a club's daily quota (from today)")
+    @app_commands.guild_only()
     async def quota(interaction: discord.Interaction, club: str, amount: int):
         if not _is_manager(interaction):
             await interaction.response.send_message("You lack permission.", ephemeral=True)
@@ -97,6 +102,7 @@ def build_bot(db, client, settings) -> commands.Bot:
         await interaction.response.send_message(msg)
 
     @bot.tree.command(name="force_check", description="Run a club's check now")
+    @app_commands.guild_only()
     async def force_check(interaction: discord.Interaction, club: str):
         if not _is_manager(interaction):
             await interaction.response.send_message("You lack permission.", ephemeral=True)
