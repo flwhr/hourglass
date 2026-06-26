@@ -8,7 +8,9 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from hourglass.commands import clubs_cmd, ops_cmd, links_cmd, tier_cmd
+from hourglass.commands import admin_cmd, club_admin_cmd, members_cmd, status_cmd
 from hourglass.services.scheduler import run_due_clubs
+from hourglass.services.rollover import period_key, should_post_rollover
 from hourglass.utils.permissions import user_is_manager
 
 logger = logging.getLogger(__name__)
@@ -18,6 +20,7 @@ def build_bot(db, client, settings) -> commands.Bot:
     intents = discord.Intents.default()
     bot = commands.Bot(command_prefix="!", intents=intents)
     last_runs: dict[int, _dt.date] = {}
+    last_posted_period = [None]
 
     def _is_manager(interaction: discord.Interaction) -> bool:
         perms = interaction.user.guild_permissions
@@ -45,6 +48,14 @@ def build_bot(db, client, settings) -> commands.Bot:
     async def scheduler_loop():
         now = _dt.datetime.now(_dt.timezone.utc)
         await run_due_clubs(db, client, now, _send, last_runs, _dm)
+        if should_post_rollover(now, last_posted_period[0]):
+            standings = await tier_cmd.cmd_tier_standings(
+                db, up_emoji=settings.emoji_promote, down_emoji=settings.emoji_relegate)
+            from hourglass.db import clubs as _clubs
+            for club_row in await _clubs.list_clubs(db, active_only=True):
+                if club_row["report_channel_id"] is not None:
+                    await _send(club_row["report_channel_id"], standings[:1900])
+        last_posted_period[0] = period_key(now)
 
     @bot.event
     async def on_ready():
@@ -160,11 +171,11 @@ def build_bot(db, client, settings) -> commands.Bot:
             db, discord_user_id=interaction.user.id, on_bombs=bomb_warnings, on_deficit=deficit_alerts)
         await interaction.response.send_message(msg, ephemeral=True)
 
-    @bot.tree.command(name="my_status", description="Show your linked trainer's bomb status")
+    @bot.tree.command(name="my_status", description="Show your linked trainer's status")
     @app_commands.guild_only()
     async def my_status(interaction: discord.Interaction):
-        await interaction.response.send_message(
-            "Use /bomb_status <club> for now.", ephemeral=True)
+        msg = await status_cmd.cmd_my_status(db, discord_user_id=interaction.user.id)
+        await interaction.response.send_message(msg, ephemeral=True)
 
     @bot.tree.command(name="bomb_status", description="List active bombs in a club")
     @app_commands.guild_only()
@@ -201,5 +212,84 @@ def build_bot(db, client, settings) -> commands.Bot:
         msg = await tier_cmd.cmd_tier_standings(
             db, up_emoji=settings.emoji_promote, down_emoji=settings.emoji_relegate)
         await interaction.response.send_message(msg[:1900])
+
+    @bot.tree.command(name="add_member", description="Manually add a member")
+    @app_commands.guild_only()
+    async def add_member(interaction: discord.Interaction, club: str, trainer_name: str,
+                         trainer_id: str, join_date: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await members_cmd.cmd_add_member(
+            db, club_name=club, trainer_name=trainer_name, trainer_id=trainer_id, join_date=join_date))
+
+    @bot.tree.command(name="deactivate_member", description="Deactivate a member")
+    @app_commands.guild_only()
+    async def deactivate_member(interaction: discord.Interaction, club: str, trainer_name: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await members_cmd.cmd_deactivate_member(
+            db, club_name=club, trainer_name=trainer_name))
+
+    @bot.tree.command(name="activate_member", description="Reactivate a member")
+    @app_commands.guild_only()
+    async def activate_member(interaction: discord.Interaction, club: str, trainer_name: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await members_cmd.cmd_activate_member(
+            db, club_name=club, trainer_name=trainer_name))
+
+    @bot.tree.command(name="remove_club", description="Delete a club and all its data")
+    @app_commands.guild_only()
+    async def remove_club(interaction: discord.Interaction, club: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await club_admin_cmd.cmd_remove_club(db, club_name=club))
+
+    @bot.tree.command(name="activate_club", description="Reactivate a club")
+    @app_commands.guild_only()
+    async def activate_club(interaction: discord.Interaction, club: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await club_admin_cmd.cmd_activate_club(db, club_name=club))
+
+    @bot.tree.command(name="reset_month", description="Clear a club's monthly data")
+    @app_commands.guild_only()
+    async def reset_month(interaction: discord.Interaction, club: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await admin_cmd.cmd_reset_month(db, club_name=club))
+
+    @bot.tree.command(name="stats", description="Show bot statistics")
+    @app_commands.guild_only()
+    async def stats(interaction: discord.Interaction):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await admin_cmd.cmd_stats(db))
+
+    @bot.tree.command(name="channel_settings", description="Show a club's channel config")
+    @app_commands.guild_only()
+    async def channel_settings(interaction: discord.Interaction, club: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await admin_cmd.cmd_channel_settings(db, club_name=club))
+
+    @bot.tree.command(name="previous_month", description="Show last month's recap for a club")
+    @app_commands.guild_only()
+    async def previous_month(interaction: discord.Interaction, club: str):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.defer()
+        now = _dt.datetime.now(_dt.timezone.utc)
+        msg = await status_cmd.cmd_previous_month(db, client, club_name=club, now_utc=now)
+        await interaction.followup.send(msg[:1900])
 
     return bot
