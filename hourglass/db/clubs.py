@@ -42,7 +42,7 @@ async def get_club_by_circle(db: Database, circle_id: str):
 
 
 async def get_club_by_name(db: Database, name: str):
-    return await db.fetchone("SELECT * FROM club WHERE name=?", (name,))
+    return await db.fetchone("SELECT * FROM club WHERE name = ? COLLATE NOCASE", (name,))
 
 
 async def list_clubs(db: Database, *, active_only: bool = False) -> list:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import calendar
-from datetime import date
+from datetime import date, timedelta
 
 from hourglass.db import bombs, clubs, members, quota
 from hourglass.scrapers.parser import parse_circle
@@ -39,7 +38,6 @@ async def cmd_my_status(db, *, discord_user_id) -> str:
 
 def _previous_month(now_utc):
     first = date(now_utc.year, now_utc.month, 1)
-    from datetime import timedelta
     last_prev = first - timedelta(days=1)
     return last_prev.year, last_prev.month, last_prev.day
 
