@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 
 import aiohttp
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 from bot import build_bot
 from config.settings import load_settings
@@ -16,8 +15,7 @@ from utils.rate_limiter import RateLimiter
 
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    load_dotenv()  # load .env (real env vars still take precedence)
-    settings = load_settings(os.environ)
+    settings = load_settings(dotenv_values())  # read config from .env
 
     db = Database()
     await db.connect(settings.database_url)
