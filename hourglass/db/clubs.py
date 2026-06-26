@@ -70,3 +70,7 @@ async def set_active(db: Database, club_id: int, active: bool) -> None:
 
 async def set_report_channel(db: Database, club_id: int, channel_id: int) -> None:
     await update_club(db, club_id, report_channel_id=channel_id)
+
+
+async def delete_club(db: Database, club_id: int) -> None:
+    await db.execute("DELETE FROM club WHERE id=?", (club_id,))
