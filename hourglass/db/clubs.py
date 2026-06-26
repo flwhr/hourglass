@@ -41,6 +41,10 @@ async def get_club_by_circle(db: Database, circle_id: str):
     return await db.fetchone("SELECT * FROM club WHERE circle_id=?", (str(circle_id),))
 
 
+async def get_club_by_name(db: Database, name: str):
+    return await db.fetchone("SELECT * FROM club WHERE name=?", (name,))
+
+
 async def list_clubs(db: Database, *, active_only: bool = False) -> list:
     sql = "SELECT * FROM club"
     if active_only:
