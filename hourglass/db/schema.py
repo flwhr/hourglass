@@ -55,4 +55,26 @@ CREATE TABLE IF NOT EXISTS quota_requirement (
     daily_quota INTEGER NOT NULL,
     set_by INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS bomb (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE,
+    club_id INTEGER NOT NULL REFERENCES club(id) ON DELETE CASCADE,
+    activation_date TEXT NOT NULL,
+    days_remaining INTEGER NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    deactivation_date TEXT,
+    last_countdown_update TEXT
+);
+
+CREATE TABLE IF NOT EXISTS user_link (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_user_id INTEGER NOT NULL,
+    member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE,
+    notify_on_bombs INTEGER NOT NULL DEFAULT 1,
+    notify_on_deficit INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT,
+    updated_at TEXT,
+    UNIQUE (member_id)
+);
 """
