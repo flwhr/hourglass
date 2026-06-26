@@ -14,7 +14,7 @@ JOIN club c ON c.id = m.club_id
 JOIN quota_history qh ON qh.member_id = m.id
 WHERE m.is_active = 1
   AND qh.date = (SELECT MAX(date) FROM quota_history WHERE member_id = m.id)
-ORDER BY qh.cumulative_fans DESC
+ORDER BY qh.cumulative_fans DESC, m.trainer_name ASC
 """
 
 
