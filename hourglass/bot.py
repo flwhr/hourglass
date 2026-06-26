@@ -7,7 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from hourglass.commands import clubs_cmd, ops_cmd, links_cmd
+from hourglass.commands import clubs_cmd, ops_cmd, links_cmd, tier_cmd
 from hourglass.services.scheduler import run_due_clubs
 from hourglass.utils.permissions import user_is_manager
 
@@ -170,5 +170,36 @@ def build_bot(db, client, settings) -> commands.Bot:
     @app_commands.guild_only()
     async def bomb_status(interaction: discord.Interaction, club: str):
         await interaction.response.send_message(await links_cmd.cmd_bomb_status(db, club_name=club))
+
+    @bot.tree.command(name="set_tier", description="Set a club's tier (1 = highest)")
+    @app_commands.guild_only()
+    async def set_tier(interaction: discord.Interaction, club: str, tier: int):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(await tier_cmd.cmd_set_tier(db, club_name=club, tier=tier))
+
+    @bot.tree.command(name="set_thresholds", description="Set a club's promote/relegate thresholds")
+    @app_commands.guild_only()
+    async def set_thresholds(interaction: discord.Interaction, club: str, promote: int, relegate: int):
+        if not _is_manager(interaction):
+            await interaction.response.send_message("You lack permission.", ephemeral=True)
+            return
+        await interaction.response.send_message(
+            await tier_cmd.cmd_set_thresholds(db, club_name=club, promote=promote, relegate=relegate))
+
+    @bot.tree.command(name="leaderboard", description="Global cross-club fan-gain leaderboard")
+    @app_commands.guild_only()
+    async def leaderboard(interaction: discord.Interaction):
+        msg = await tier_cmd.cmd_leaderboard(
+            db, up_emoji=settings.emoji_promote, down_emoji=settings.emoji_relegate)
+        await interaction.response.send_message(msg[:1900])
+
+    @bot.tree.command(name="tier_standings", description="Per-club standings with promotion/relegation")
+    @app_commands.guild_only()
+    async def tier_standings(interaction: discord.Interaction):
+        msg = await tier_cmd.cmd_tier_standings(
+            db, up_emoji=settings.emoji_promote, down_emoji=settings.emoji_relegate)
+        await interaction.response.send_message(msg[:1900])
 
     return bot

@@ -14,4 +14,5 @@ async def test_build_bot_registers_expected_commands():
         "set_report_channel", "quota", "force_check",
         "set_alert_channel", "link_trainer", "unlink",
         "notification_settings", "my_status", "bomb_status",
+        "set_tier", "set_thresholds", "leaderboard", "tier_standings",
     } <= names
