@@ -66,3 +66,9 @@ async def reactivate_member(db: Database, club_id: int, trainer_id: str) -> None
         "UPDATE member SET is_active=1, manually_deactivated=0 WHERE club_id=? AND trainer_id=?",
         (club_id, str(trainer_id)),
     )
+
+
+async def reset_manual_flags(db: Database, club_id: int) -> None:
+    await db.execute(
+        "UPDATE member SET manually_deactivated=0 WHERE club_id=?", (club_id,)
+    )

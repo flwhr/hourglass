@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from hourglass.db import clubs, members, quota
+from hourglass.db import bombs as bombs_repo, clubs, members, quota
 from hourglass.db.database import Database
 from hourglass.scrapers.parser import parse_circle
 from hourglass.scrapers.umamoe_api import StaleDataError
@@ -39,6 +39,8 @@ async def daily_check_for_club(db: Database, client, club_row, now_utc: datetime
         samples.append((mg.gain, prev))
     if any_member_reset(samples):
         await quota.clear_month_for_club(db, club_id)
+        await bombs_repo.clear_for_club(db, club_id)
+        await members.reset_manual_flags(db, club_id)
 
     # Freshness: if everyone is flat, the day's data isn't published yet.
     if parsed and all(is_stale(mg.monthly_fans) for mg in parsed):
