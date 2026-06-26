@@ -6,11 +6,11 @@
 
 **Architecture:** A discord.py monolith (later plans) sits on top of a thin data layer. This plan delivers that data layer in isolation: a pure parser (no I/O, fully unit-testable) and an async fetch client that wraps `aiohttp` behind a shared token-bucket rate limiter with retries. No Discord or DB code yet — those arrive in Plan 2.
 
-**Tech Stack:** Python 3.11+, `aiohttp` (HTTP), `pytest` + `pytest-asyncio` (tests). Later plans add `discord.py`, `asyncpg`, `Pillow`, `plotly`/`kaleido`.
+**Tech Stack:** Python 3.10+, `aiohttp` (HTTP), `pytest` + `pytest-asyncio` (tests). Later plans add `discord.py`, `asyncpg`, `Pillow`, `plotly`/`kaleido`.
 
 ## Global Constraints
 
-- Python **3.11+** (uses `list[int]` / `X | None` builtins, `tomllib` if needed).
+- Python **3.10+** (uses `list[int]` / `X | None` annotations; no `tomllib`). Default `python` on this machine is 3.10.19.
 - uma.moe endpoint: `https://uma.moe/api/v4/circles`, params `circle_id`, `year`, `month`; header `X-API-Key` (optional, from env `UMAMOE_API_KEY`); request timeout **30s**.
 - All uma.moe HTTP calls go through **one shared rate limiter** instance (token bucket, FIFO).
 - Parser rules (verbatim): lifetime→monthly via first-`>0` baseline; negative `daily_fans` → 0; a member with 0 on the current day is a leaver → excluded; `monthly[day] = max(0, lifetime[day] - baseline)`.
