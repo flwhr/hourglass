@@ -48,6 +48,14 @@ async def daily_check_for_club(db: Database, client, club_row, now_utc: datetime
     report_date = plan.report_date.isoformat()
     default_quota = club_row["daily_quota"]
 
+    # Resolve the quota schedule once for the whole club (same for all members).
+    quota_by_day = {
+        d: await quota.get_quota_for_date(
+            db, club_id, f"{plan.year:04d}-{plan.month:02d}-{d:02d}", default=default_quota
+        )
+        for d in range(1, plan.current_day + 1)
+    }
+
     states: list[MemberState] = []
     for mg in parsed:
         join_date = f"{plan.year:04d}-{plan.month:02d}-{mg.join_day:02d}"
@@ -56,12 +64,6 @@ async def daily_check_for_club(db: Database, client, club_row, now_utc: datetime
             join_date=join_date, last_seen=report_date,
         )
 
-        async def quota_for_day(d: int) -> int:  # noqa: ANN001 (inner helper)
-            on_date = f"{plan.year:04d}-{plan.month:02d}-{d:02d}"
-            return await quota.get_quota_for_date(db, club_id, on_date, default=default_quota)
-
-        # Resolve the quota schedule for this month into a plain mapping (pure calc below).
-        quota_by_day = {d: await quota_for_day(d) for d in range(1, plan.current_day + 1)}
         result = compute_quota(
             mg.monthly_fans, mg.join_day, lambda d: quota_by_day[d], period_days
         )
