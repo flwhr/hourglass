@@ -56,3 +56,31 @@ def render_trainer_card(
         draw.text((_PAD, y), line, fill=_FG, font=None)
         y += _LINE_H
     return _png(img)
+
+
+def render_progress_chart(series: dict) -> bytes:
+    width, height = 600, 320
+    img = Image.new("RGB", (width, height), _BG)
+    draw = ImageDraw.Draw(img)
+    if not series:
+        draw.text((_PAD, _PAD), "No data", fill=_FG, font=None)
+        return _png(img)
+
+    margin = 30
+    plot_w = width - 2 * margin
+    plot_h = height - 2 * margin
+    max_val = max((max(vals) for vals in series.values() if vals), default=0) or 1
+    max_len = max((len(vals) for vals in series.values()), default=1)
+    palette = [(120, 200, 255), (255, 170, 120), (170, 255, 150), (255, 140, 200), (220, 220, 120)]
+
+    for idx, (name, vals) in enumerate(sorted(series.items())):
+        color = palette[idx % len(palette)]
+        points = []
+        for i, v in enumerate(vals):
+            x = margin + (plot_w * i / max(max_len - 1, 1))
+            y = margin + plot_h - (plot_h * v / max_val)
+            points.append((x, y))
+        if len(points) >= 2:
+            draw.line(points, fill=color, width=2)
+        draw.text((margin, margin + idx * _LINE_H), name, fill=color, font=None)
+    return _png(img)
