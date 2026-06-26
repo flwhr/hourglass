@@ -342,36 +342,42 @@ def build_bot(db, client, settings) -> commands.Bot:
     @app_commands.guild_only()
     async def progress_chart(interaction: discord.Interaction, club: str):
         await interaction.response.defer()
-        row = await clubs.get_club_by_name(db, club)
-        if row is None:
-            await interaction.followup.send(f"No club named '{club}'.")
-            return
-        series = await history_repo.get_club_history(db, row["id"])
-        png = render_progress_chart(series)
-        await interaction.followup.send(file=discord.File(io.BytesIO(png), filename="progress.png"))
+        try:
+            row = await clubs.get_club_by_name(db, club)
+            if row is None:
+                await interaction.followup.send(f"No club named '{club}'.")
+                return
+            series = await history_repo.get_club_history(db, row["id"])
+            png = render_progress_chart(series)
+            await interaction.followup.send(file=discord.File(io.BytesIO(png), filename="progress.png"))
+        except Exception:
+            await interaction.followup.send("Could not generate the image.")
 
     @bot.tree.command(name="member_status", description="Show a member's trainer card")
     @app_commands.guild_only()
     async def member_status(interaction: discord.Interaction, club: str, trainer_name: str):
         await interaction.response.defer()
-        row = await clubs.get_club_by_name(db, club)
-        if row is None:
-            await interaction.followup.send(f"No club named '{club}'.")
-            return
-        member = await db.fetchone(
-            "SELECT * FROM member WHERE club_id=? AND trainer_name=?", (row["id"], trainer_name))
-        if member is None:
-            await interaction.followup.send(f"No member named '{trainer_name}' in '{club}'.")
-            return
-        from hourglass.db import bombs as _bombs
-        hist = await db.fetchone(
-            "SELECT cumulative_fans, days_behind FROM quota_history WHERE member_id=? "
-            "ORDER BY date DESC, id DESC LIMIT 1", (member["id"],))
-        gain = hist["cumulative_fans"] if hist else 0
-        days_behind = hist["days_behind"] if hist else 0
-        bomb = await _bombs.get_active_for_member(db, member["id"])
-        bomb_days = bomb["days_remaining"] if bomb else None
-        png = render_trainer_card(trainer_name, club, gain, days_behind, bomb_days)
-        await interaction.followup.send(file=discord.File(io.BytesIO(png), filename="card.png"))
+        try:
+            row = await clubs.get_club_by_name(db, club)
+            if row is None:
+                await interaction.followup.send(f"No club named '{club}'.")
+                return
+            member = await db.fetchone(
+                "SELECT * FROM member WHERE club_id=? AND trainer_name=?", (row["id"], trainer_name))
+            if member is None:
+                await interaction.followup.send(f"No member named '{trainer_name}' in '{club}'.")
+                return
+            from hourglass.db import bombs as _bombs
+            hist = await db.fetchone(
+                "SELECT cumulative_fans, days_behind FROM quota_history WHERE member_id=? "
+                "ORDER BY date DESC, id DESC LIMIT 1", (member["id"],))
+            gain = hist["cumulative_fans"] if hist else 0
+            days_behind = hist["days_behind"] if hist else 0
+            bomb = await _bombs.get_active_for_member(db, member["id"])
+            bomb_days = bomb["days_remaining"] if bomb else None
+            png = render_trainer_card(trainer_name, club, gain, days_behind, bomb_days)
+            await interaction.followup.send(file=discord.File(io.BytesIO(png), filename="card.png"))
+        except Exception:
+            await interaction.followup.send("Could not generate the image.")
 
     return bot
