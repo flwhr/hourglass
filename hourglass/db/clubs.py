@@ -72,5 +72,9 @@ async def set_report_channel(db: Database, club_id: int, channel_id: int) -> Non
     await update_club(db, club_id, report_channel_id=channel_id)
 
 
+async def set_monthly_info(db: Database, club_id: int, *, channel_id: int, message_id: int) -> None:
+    await update_club(db, club_id, monthly_info_channel_id=channel_id, monthly_info_message_id=message_id)
+
+
 async def delete_club(db: Database, club_id: int) -> None:
     await db.execute("DELETE FROM club WHERE id=?", (club_id,))
