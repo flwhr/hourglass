@@ -9,6 +9,7 @@ from discord.ext import commands, tasks
 
 from hourglass.commands import clubs_cmd, ops_cmd, links_cmd, tier_cmd
 from hourglass.commands import admin_cmd, club_admin_cmd, members_cmd, status_cmd
+from hourglass.db import clubs
 from hourglass.services.scheduler import run_due_clubs
 from hourglass.services.rollover import period_key, should_post_rollover
 from hourglass.utils.permissions import user_is_manager
@@ -49,13 +50,14 @@ def build_bot(db, client, settings) -> commands.Bot:
         now = _dt.datetime.now(_dt.timezone.utc)
         await run_due_clubs(db, client, now, _send, last_runs, _dm)
         if should_post_rollover(now, last_posted_period[0]):
+            last_posted_period[0] = period_key(now)
             standings = await tier_cmd.cmd_tier_standings(
                 db, up_emoji=settings.emoji_promote, down_emoji=settings.emoji_relegate)
-            from hourglass.db import clubs as _clubs
-            for club_row in await _clubs.list_clubs(db, active_only=True):
+            for club_row in await clubs.list_clubs(db, active_only=True):
                 if club_row["report_channel_id"] is not None:
                     await _send(club_row["report_channel_id"], standings[:1900])
-        last_posted_period[0] = period_key(now)
+        else:
+            last_posted_period[0] = period_key(now)
 
     @bot.event
     async def on_ready():
@@ -141,12 +143,11 @@ def build_bot(db, client, settings) -> commands.Bot:
         if not _is_manager(interaction):
             await interaction.response.send_message("You lack permission.", ephemeral=True)
             return
-        from hourglass.db import clubs as _clubs
-        row = await _clubs.get_club_by_name(db, club)
+        row = await clubs.get_club_by_name(db, club)
         if row is None:
             await interaction.response.send_message(f"No club named '{club}'.")
             return
-        await _clubs.update_club(db, row["id"], alert_channel_id=channel.id)
+        await clubs.update_club(db, row["id"], alert_channel_id=channel.id)
         await interaction.response.send_message(f"Alert channel set for '{club}'.")
 
     @bot.tree.command(name="link_trainer", description="Link your Discord to a trainer")
